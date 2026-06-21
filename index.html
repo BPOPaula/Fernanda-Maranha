@@ -200,7 +200,8 @@ td select,td input[type=text]{font-size:11px;border:1px solid var(--bd);border-r
     </div>
   </div>
   <div class="acts" id="pacts" style="display:none">
-    <button class="btn btnp" onclick="baixar()">⬇ Baixar lancamentos.json atualizado</button>
+    <button class="btn btnp" onclick="aplicarEAtualizar()">✓ Aplicar e atualizar dashboard</button>
+    <button class="btn btno" onclick="baixar()">⬇ Baixar lancamentos.json</button>
     <button class="btn btno" onclick="resetP()">↩ Novo extrato</button>
   </div>
 </div></div>
@@ -374,6 +375,16 @@ function fp(f,btn){
   });
 }
 
+function aplicarEAtualizar(){
+  const eIds=new Set(TODOS.map(l=>l.id));
+  const novosU=NOVOS.filter(l=>!eIds.has(l.id));
+  if(!novosU.length){alert('Nenhum lançamento novo para aplicar.');return;}
+  TODOS=[...TODOS,...novosU];
+  renderDash();
+  showV('dash', document.querySelector('.ntab'));
+  document.querySelectorAll('.ntab').forEach((t,i)=>{if(i===0)t.classList.add('on');else t.classList.remove('on');});
+  alert('✓ '+novosU.length+' lançamentos aplicados! Dashboard atualizado.\n\nNão esqueça de clicar em "Baixar lancamentos.json" e subir no GitHub para salvar permanentemente.');
+}
 function baixar(){
   const eIds=new Set(TODOS.map(l=>l.id));
   const novosU=NOVOS.filter(l=>!eIds.has(l.id));
