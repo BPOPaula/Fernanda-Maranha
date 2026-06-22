@@ -107,6 +107,10 @@ td select,td input[type=text]{font-size:11px;border:1px solid var(--bd);border-r
 .form-input.invalid{border-color:var(--sr)}
 .btn-dinheiro{background:var(--ent-bg);color:var(--eg);border:1px solid var(--ent-br)}
 .btn-dinheiro:hover{background:#dcfce7}
+.tipo-toggle{display:flex;gap:4px;margin-bottom:1rem}
+.tipo-btn{flex:1;padding:8px;border-radius:6px;border:1px solid var(--bd);background:var(--bg);cursor:pointer;font-size:12px;font-weight:500;color:var(--mu);transition:.15s;text-align:center}
+.tipo-btn.rec.on{background:var(--ent-bg);color:var(--eg);border-color:var(--ent-br)}
+.tipo-btn.des.on{background:var(--sbg);color:var(--sr);border-color:var(--sbr)}
 @media(max-width:600px){.cards{grid-template-columns:1fr 1fr}.an{min-width:120px}}
 </style>
 </head>
@@ -187,7 +191,14 @@ td select,td input[type=text]{font-size:11px;border:1px solid var(--bd);border-r
   <div class="divider-or">ou lance manualmente</div>
 
   <div class="manual-form">
-    <div class="manual-form-title">💵 Recebimento em dinheiro</div>
+    <div class="manual-form-title">💵 Lançamento em dinheiro</div>
+
+    <!-- RECEITA / DESPESA -->
+    <div class="tipo-toggle">
+      <button class="tipo-btn rec on" id="tb-rec" onclick="setTipo('C')">↑ Receita</button>
+      <button class="tipo-btn des"    id="tb-des" onclick="setTipo('D')">↓ Despesa</button>
+    </div>
+
     <div class="form-grid" style="margin-bottom:10px">
       <div class="form-field">
         <label class="form-label">Data</label>
@@ -198,13 +209,15 @@ td select,td input[type=text]{font-size:11px;border:1px solid var(--bd);border-r
         <input type="number" class="form-input" id="m-valor" placeholder="0,00" min="0" step="0.01">
       </div>
     </div>
+
     <div class="form-grid full" style="margin-bottom:10px">
       <div class="form-field">
-        <label class="form-label">Aluno / Descrição</label>
+        <label class="form-label" id="m-desc-label">Aluno / Origem</label>
         <input type="text" class="form-input" id="m-desc" placeholder="Ex: Ticiana Tonon — aula avulsa" list="alunos-list">
         <datalist id="alunos-list"></datalist>
       </div>
     </div>
+
     <div class="form-grid" style="margin-bottom:1rem">
       <div class="form-field">
         <label class="form-label">Categoria</label>
@@ -215,19 +228,21 @@ td select,td input[type=text]{font-size:11px;border:1px solid var(--bd);border-r
           <option value="SAÚDE">SAÚDE</option>
           <option value="ALIMENTAÇÃO / HIGIENE">ALIMENTAÇÃO / HIGIENE</option>
           <option value="INVESTIMENTOS/RESERVAS">INVESTIMENTOS/RESERVAS</option>
+          <option value="DESPESAS FINANCEIRAS">DESPESAS FINANCEIRAS</option>
+          <option value="TRANSPORTES FERNANDA">TRANSPORTES FERNANDA</option>
+          <option value="EDUCAÇÃO">EDUCAÇÃO</option>
+          <option value="THE TRAINING HOUSE">THE TRAINING HOUSE</option>
+          <option value="UTILIDADES">UTILIDADES</option>
         </select>
       </div>
       <div class="form-field">
-        <label class="form-label">Tipo</label>
-        <select class="form-input" id="m-tipo">
-          <option value="SALÁRIOS FERNANDA PERSONAL">SALÁRIOS FERNANDA PERSONAL</option>
-          <option value="OUTRAS RECEITAS FERNANDA">OUTRAS RECEITAS FERNANDA</option>
-          <option value="RETIRADA DE SÓCIA TTH">RETIRADA DE SÓCIA TTH</option>
-        </select>
+        <label class="form-label">Detalhe / Obs</label>
+        <input type="text" class="form-input" id="m-obs" placeholder="Ex: aula avulsa, mercado...">
       </div>
     </div>
-    <div id="m-status" style="font-size:11px;color:var(--eg);min-height:18px;margin-bottom:.75rem"></div>
-    <button class="btn btn-dinheiro" onclick="lancarDinheiro()">💵 Adicionar lançamento</button>
+
+    <div id="m-status" style="font-size:11px;min-height:18px;margin-bottom:.75rem"></div>
+    <button class="btn btn-dinheiro" id="btn-lancar" onclick="lancarDinheiro()">💵 Adicionar receita</button>
   </div>
   <div id="pcards" class="cards" style="display:none">
     <div class="card"><div class="cl">Extraídos</div><div class="cv" id="pc-t">—</div></div>
@@ -708,88 +723,109 @@ function show(id){const e=document.getElementById(id);if(e)e.style.display='';}
 function hide(id){const e=document.getElementById(id);if(e)e.style.display='none';}
 
 // ── LANÇAMENTO EM DINHEIRO ───────────────────────────────────────────────
+let mTipo = 'C';
+
+function setTipo(cd){
+  mTipo=cd;
+  const isRec=cd==='C';
+  document.getElementById('tb-rec').className='tipo-btn rec'+(isRec?' on':'');
+  document.getElementById('tb-des').className='tipo-btn des'+(!isRec?' on':'');
+  document.getElementById('m-desc-label').textContent=isRec?'Aluno / Origem':'Destinatário / Descrição';
+  document.getElementById('m-desc').placeholder=isRec?'Ex: Ticiana Tonon — aula avulsa':'Ex: Farmácia, mercado...';
+  const btn=document.getElementById('btn-lancar');
+  btn.textContent=isRec?'💵 Adicionar receita':'💵 Adicionar despesa';
+  btn.style.background=isRec?'var(--ent-bg)':'var(--sbg)';
+  btn.style.color=isRec?'var(--eg)':'var(--sr)';
+  btn.style.borderColor=isRec?'var(--ent-br)':'var(--sbr)';
+  const cat=document.getElementById('m-cat');
+  if(isRec){
+    cat.innerHTML='<option value="RECEITAS FERNANDA">RECEITAS FERNANDA</option><option value="OUTROS FERNANDA">OUTROS FERNANDA</option>';
+  } else {
+    cat.innerHTML='<option value="OUTROS FERNANDA">OUTROS FERNANDA</option><option value="MORADIA">MORADIA</option><option value="SAÚDE">SAÚDE</option><option value="ALIMENTAÇÃO / HIGIENE">ALIMENTAÇÃO / HIGIENE</option><option value="INVESTIMENTOS/RESERVAS">INVESTIMENTOS/RESERVAS</option><option value="DESPESAS FINANCEIRAS">DESPESAS FINANCEIRAS</option><option value="TRANSPORTES FERNANDA">TRANSPORTES FERNANDA</option><option value="EDUCAÇÃO">EDUCAÇÃO</option><option value="THE TRAINING HOUSE">THE TRAINING HOUSE</option><option value="UTILIDADES">UTILIDADES</option>';
+  }
+}
+
 function lancarDinheiro(){
-  const data  = document.getElementById('m-data').value;
-  const valor = parseFloat(document.getElementById('m-valor').value);
-  const desc  = document.getElementById('m-desc').value.trim();
-  const cat   = document.getElementById('m-cat').value;
-  const tipo  = document.getElementById('m-tipo').value;
-  const st    = document.getElementById('m-status');
+  const data=document.getElementById('m-data').value;
+  const valor=parseFloat(document.getElementById('m-valor').value);
+  const desc=document.getElementById('m-desc').value.trim();
+  const cat=document.getElementById('m-cat').value;
+  const obsExtra=document.getElementById('m-obs').value.trim();
+  const st=document.getElementById('m-status');
+  const cd=mTipo;
+  const isRec=cd==='C';
 
-  // Validar
-  if(!data){document.getElementById('m-data').classList.add('invalid');st.style.color='var(--sr)';st.textContent='Informe a data.';return;}
-  if(!valor||valor<=0){document.getElementById('m-valor').classList.add('invalid');st.style.color='var(--sr)';st.textContent='Informe um valor válido.';return;}
-  if(!desc){document.getElementById('m-desc').classList.add('invalid');st.style.color='var(--sr)';st.textContent='Informe o aluno ou descrição.';return;}
+  let ok=true;
+  ['m-data','m-valor','m-desc'].forEach(id=>{
+    const el=document.getElementById(id);
+    const val=el.value;
+    const empty=!val||(id==='m-valor'&&(parseFloat(val)<=0||isNaN(parseFloat(val))));
+    el.classList.toggle('invalid',empty);
+    if(empty) ok=false;
+  });
+  if(!ok){st.style.color='var(--sr)';st.textContent='Preencha todos os campos obrigatórios.';return;}
 
-  // Remover invalid
-  ['m-data','m-valor','m-desc'].forEach(id=>document.getElementById(id).classList.remove('invalid'));
+  const [y,m,d]=data.split('-');
+  const dataFmt=d+'/'+m+'/'+y;
 
-  // Montar data no formato DD/MM/YYYY
-  const [y,m,d] = data.split('-');
-  const dataFmt = d+'/'+m+'/'+y;
+  let det='';
+  if(isRec){
+    det=desc;
+    const du=desc.toUpperCase();
+    for(const[,v] of Object.entries(CPFS)){if(du.includes(v.toUpperCase())){det=v;break;}}
+  }
 
-  // Identificar aluno
-  const descUp = desc.toUpperCase();
-  let det = desc;
-  for(const[k,v] of Object.entries(CPFS)){if(descUp.includes(v.toUpperCase())){det=v;break;}}
+  const prefixo=isRec?'Recebimento em dinheiro':'Pagamento em dinheiro';
+  const hist=(prefixo+' - '+desc).substring(0,100);
+  const tipo=isRec?'SALÁRIOS FERNANDA PERSONAL':'';
 
-  // Criar lançamento
-  const hist = 'Recebimento em dinheiro - '+desc;
-  const id   = (function(da,va,hi){
-    var s=da.replace(/\//g,'')+'-'+Math.round(va*100)+'-C-'+hi.substring(0,30).replace(/[^A-Z0-9]/g,'').toUpperCase();
+  const id=(function(da,va,c,hi){
+    var s=da.replace(/\//g,'')+'-'+Math.round(va*100)+'-'+c+'-'+hi.substring(0,30).replace(/[^A-Z0-9]/g,'').toUpperCase();
     var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h=(h&0xFFFFFFFF)>>>0;}
     return s.slice(0,24)+h.toString(16);
-  })(dataFmt, valor, hist.toUpperCase());
+  })(dataFmt,valor,cd,hist.toUpperCase());
 
-  const lan = {id,data:dataFmt,hist:hist.substring(0,100),valor:Math.round(valor*100)/100,
-    cd:'C',conta:'ENTRADA',cat,tipo,det,obs:'DINHEIRO',ambiguo:false};
+  if(new Set(TODOS.map(l=>l.id)).has(id)){st.style.color='var(--sr)';st.textContent='Este lançamento já existe na base.';return;}
 
-  // Verificar duplicata
-  const existIds = new Set(TODOS.map(l=>l.id));
-  if(existIds.has(lan.id)){st.style.color='var(--sr)';st.textContent='Este lançamento já existe na base.';return;}
+  const lan={id,data:dataFmt,hist,valor:Math.round(valor*100)/100,cd,conta:isRec?'ENTRADA':'SAÍDA',
+    cat,tipo,det,obs:'DINHEIRO'+(obsExtra?' - '+obsExtra:''),ambiguo:false};
 
-  // Adicionar a NOVOS e TODOS
   NOVOS.push(lan);
-
-  // Mostrar na tabela (show pacts se ainda não visível)
   ['pcards','ptw','pacts','ibox'].forEach(show);
-  renderTabMais(lan, NOVOS.length-1);
+  renderTabMais(lan,NOVOS.length-1);
 
-  // Atualizar contadores
-  const tot=NOVOS.length;
-  const ent=NOVOS.filter(l=>l.conta==='ENTRADA').length;
-  const sai=NOVOS.filter(l=>l.conta==='SAÍDA').length;
-  const amb=NOVOS.filter(l=>l.ambiguo).length;
+  const tot=NOVOS.length,ent=NOVOS.filter(l=>l.conta==='ENTRADA').length,
+        sai=NOVOS.filter(l=>l.conta==='SAÍDA').length,amb=NOVOS.filter(l=>l.ambiguo).length;
   stxt('pc-t',tot);stxt('pc-e',ent);stxt('pc-s',sai);stxt('pc-a',amb);
   stxt('ptit',tot+' lançamentos novos');
 
-  // Limpar form
   document.getElementById('m-data').value='';
   document.getElementById('m-valor').value='';
   document.getElementById('m-desc').value='';
-  st.style.color='var(--eg)';
-  st.textContent='✓ Lançamento adicionado — R$ '+fmt(valor).replace('R$ ','')+' ('+dataFmt+')';
+  document.getElementById('m-obs').value='';
+  st.style.color=isRec?'var(--eg)':'var(--sr)';
+  st.textContent='✓ '+(isRec?'Receita':'Despesa')+' adicionada — R$ '+valor.toLocaleString('pt-BR',{minimumFractionDigits:2})+' ('+dataFmt+')';
   setTimeout(()=>{st.textContent='';},3000);
 }
 
-function renderTabMais(l, i){
+function renderTabMais(l,i){
   const body=document.getElementById('pb');
   const tr=document.createElement('tr');
-  tr.className='er2'; // entrada em dinheiro
-  tr.style.borderLeft='3px solid var(--eg)';
-  const CATS_LIST=['RECEITAS FERNANDA','MORADIA','SAÚDE','INVESTIMENTOS/RESERVAS','DESPESAS FINANCEIRAS','TRANSPORTES FERNANDA','ALIMENTAÇÃO / HIGIENE','EDUCAÇÃO','THE TRAINING HOUSE','UTILIDADES','OUTROS FERNANDA'];
-  const opts=CATS_LIST.map(c=>`<option value="${c}"${c===l.cat?' selected':''}>${c}</option>`).join('');
+  tr.className=l.conta==='ENTRADA'?'er2':'sr2';
+  tr.style.borderLeft='3px solid '+(l.conta==='ENTRADA'?'var(--eg)':'var(--sr)');
+  const CATS=['RECEITAS FERNANDA','MORADIA','SAÚDE','INVESTIMENTOS/RESERVAS','DESPESAS FINANCEIRAS','TRANSPORTES FERNANDA','ALIMENTAÇÃO / HIGIENE','EDUCAÇÃO','THE TRAINING HOUSE','UTILIDADES','OUTROS FERNANDA'];
+  const opts=CATS.map(c=>`<option value="${c}"${c===l.cat?' selected':''}>${c}</option>`).join('');
+  const badge=l.conta==='ENTRADA'?'<span class="pl2 ple">ENTRADA</span>':'<span class="pl2 pls">SAÍDA</span>';
   tr.innerHTML=`<td style="white-space:nowrap;color:var(--mu);font-size:11px">${l.data}</td>
     <td class="hc" title="${l.hist}">${l.hist}</td>
-    <td class="ve" style="white-space:nowrap">${fmt(l.valor)}</td>
-    <td><span class="pl2 ple">ENTRADA</span> <span style="font-size:9px;background:#dcfce7;color:#166534;padding:1px 5px;border-radius:5px">DINHEIRO</span></td>
+    <td class="${l.conta==='ENTRADA'?'ve':'vs'}" style="white-space:nowrap">${fmt(l.valor)}</td>
+    <td>${badge} <span style="font-size:9px;background:#fef9c3;color:#854d0e;padding:1px 5px;border-radius:5px">DINHEIRO</span></td>
     <td><select onchange="NOVOS[${i}].cat=this.value"><option value="">—</option>${opts}</select></td>
     <td><input type="text" value="${l.tipo||''}" placeholder="tipo..." oninput="NOVOS[${i}].tipo=this.value"></td>
     <td><input type="text" value="${l.obs||''}" placeholder="obs..." oninput="NOVOS[${i}].obs=this.value"></td>`;
   body.appendChild(tr);
 }
 
-// Preencher datalist de alunos
 function preencherAlunos(){
   const dl=document.getElementById('alunos-list');
   if(!dl) return;
